@@ -91,15 +91,22 @@ class UpdateProfile : Task {
 
             Log.magenta("Profile update: ${player.stats.experience} XP on LVL ${player.stats.level}; $curLevelXP/$nextXP ($ratio%) to LVL ${player.stats.level + 1}")
             Log.magenta("XP gain: ${NumberFormat.getInstance().format(player.stats.experience - ctx.startXp.get())} XP in ${ChronoUnit.MINUTES.between(ctx.startTime, LocalDateTime.now())} mins; " +
-                    "XP rate: ${NumberFormat.getInstance().format(xpPerHour)}/hr; Next level in: ${nextLevel}")
+                    "XP rate: ${NumberFormat.getInstance().format(xpPerHour)}/hr; Next level in: $nextLevel")
             Log.magenta("Pokemon caught/transferred: ${ctx.pokemonStats.first.get()}/${ctx.pokemonStats.second.get()}; " +
                     "Pokemon caught from lures: ${ctx.luredPokemonStats.get()}; " +
                     "Items caught/dropped: ${ctx.itemStats.first.get()}/${ctx.itemStats.second.get()};")
             Log.magenta("Pokebank ${inventories.pokebank.pokemons.size + inventories.hatchery.eggs.size}/${ctx.profile.playerData.maxPokemonStorage}; " +
                     "Stardust ${ctx.profile.currencies[PlayerProfile.Currency.STARDUST]}; " +
                     "Inventory ${inventories.itemBag.size()}/${ctx.profile.playerData.maxItemStorage}"
-
             )
+            if (inventories.pokebank.pokemons.size + inventories.hatchery.eggs.size < ctx.profile.playerData.maxPokemonStorage && ctx.pokemonInventoryFullStatus.get())
+                ctx.pokemonInventoryFullStatus.set(false)
+            else if (inventories.pokebank.pokemons.size + inventories.hatchery.eggs.size >= ctx.profile.playerData.maxPokemonStorage && !ctx.pokemonInventoryFullStatus.get())
+                ctx.pokemonInventoryFullStatus.set(true)
+
+            if (settings.catchPokemon && ctx.pokemonInventoryFullStatus.get())
+                Log.red("Pokemon inventory is full, not catching!")
+
             ctx.server.sendProfile()
         } catch (e: Exception) {
             Log.red("Failed to update profile and inventories")
